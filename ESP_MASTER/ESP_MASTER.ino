@@ -22,7 +22,9 @@ ESP8266WebServer server(80);
 unsigned long timerDelay;
 bool realTimeMode;
 
-struct_message incomingReadings;
+msg_received incomingReadings;
+msg_sent dataToSend;
+
 
 
 // REPLACE WITH THE MAC Address of your receiver 
@@ -64,6 +66,25 @@ void setup() {
   
 }
  
+
+// Updates DHT readings every 10 seconds
+const long interval = 10000; 
+unsigned long previousMillis = 0;    // will store last time DHT was updated 
+
 void loop() {
   server.handleClient();
+  // Send message via ESP-NOW
+  unsigned long currentMillis = millis();
+  if (currentMillis - previousMillis >= interval) {
+    // save the last time you updated the DHT values
+    previousMillis = currentMillis;
+
+    dataToSend.datetime = "datetime";
+    dataToSend.mode = 'a';
+    dataToSend.humidity_thresh = 50;
+
+    // Send message via ESP-NOW
+    esp_now_send(slaveMacAddress, (uint8_t *) &dataToSend, sizeof(dataToSend));
+  }
+
 }

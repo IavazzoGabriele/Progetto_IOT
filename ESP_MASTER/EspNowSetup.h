@@ -22,12 +22,14 @@ typedef struct struct_msg {
   char mode;  /*d = default, a = auto, m = manual*/
   unsigned long humidity_thresh;  /*solo per a*/
   String datetime;   /*solo per d*/
-
 } msg_sent;
 
 
 
-extern struct_message incomingReadings;
+
+
+extern msg_sent dataToSend;
+extern msg_received incomingReadings;
 
 
 void OnDataSent(uint8_t *mac_addr, uint8_t sendStatus);
