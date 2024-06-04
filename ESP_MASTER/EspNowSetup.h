@@ -1,5 +1,6 @@
 #include <stdint.h> 
 #include <SoftwareSerial.h>
+#include "SDCardSetup.h"
 
 #ifndef ESPNOWSETUP_H
 #define ESPNOWSETUP_H
@@ -31,7 +32,7 @@ typedef struct struct_msg {
 extern msg_sent dataToSend;
 extern msg_received incomingReadings;
 
-
+String parseString(msg_received* data);
 void OnDataSent(uint8_t *mac_addr, uint8_t sendStatus);
 void OnDataRecv(uint8_t * mac, uint8_t *incomingData, uint8_t len);
 

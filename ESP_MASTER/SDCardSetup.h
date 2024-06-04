@@ -13,6 +13,7 @@
 
 void setup_SDCard();
 String csvToString(File file);
-void write_csv();
+void write_csv(String filename);
+void writeDataOnSDCard(String data,String filename);
 
 #endif

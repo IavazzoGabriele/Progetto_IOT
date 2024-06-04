@@ -32,6 +32,7 @@ uint8_t broadcastAddress[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
 uint8_t slaveMacAddress[] = {0xDC, 0x4F, 0x22, 0x55, 0x15, 0x06};
 
 // LASCIARE NEL .ino altrimenti crasha
+// Segnalare problemi nella relazione
 void initEspNow(){
   // Init ESP-NOW
   if (esp_now_init() != 0) {

@@ -14,7 +14,16 @@ void setup_SDCard(){
   }
 }
 
-
+void writeDataOnSDCard(String data,String filename){
+  File file = SD.open(filename, FILE_APPEND);
+  if (!file) {
+    Serial.println("Failed to open file for appending");
+    return;
+  }
+  file.println(data);
+  file.close();
+  Serial.println("Data appended successfully!");
+}
 
 String csvToString(File file){
   String csvData = "";
