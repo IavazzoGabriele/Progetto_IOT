@@ -15,7 +15,16 @@ typedef struct struct_message {
     float soil;
     float water;
     float irr;
-} struct_message;
+} msg_received;
+
+
+typedef struct struct_msg {
+  char mode;  /*d = default, a = auto, m = manual*/
+  unsigned long humidity_thresh;  /*solo per a*/
+  String datetime;   /*solo per d*/
+
+} msg_sent;
+
 
 
 extern struct_message incomingReadings;
