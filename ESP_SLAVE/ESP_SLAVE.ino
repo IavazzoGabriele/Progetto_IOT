@@ -1,9 +1,9 @@
 #include <SoftwareSerial.h> // Comunicazione seriale Arduino-esp8266
+SoftwareSerial espSerial(10, 11); // Pins modificati per evitare conflitti con Serial
 
-SoftwareSerial espSerial(10, 11); // Pines modificati per evitare conflitti con Serial
-
-#include <ESP8266WiFi.h>
 #include <espnow.h>
+#include "EspNowConfig.h"
+#include "WifiSetup.h"
 
 // REPLACE WITH THE MAC Address of your receiver 
 uint8_t broadcastAddress[] = {0x8c, 0xaa, 0xb5, 0x7c, 0x6a, 0x17};
@@ -21,56 +21,10 @@ float irrigationMode;
 const long interval = 10000; 
 unsigned long previousMillis = 0;    // will store last time readings were updated 
 
-// Variable to store if sending data was successful
-String success;
-
-//Structure example to send data
-//Must match the receiver structure
-typedef struct struct_message {
-    float temp;
-    float hum;
-    float bri;
-    float bat;
-    float soil;
-    float water;
-    float irr;
-} struct_message;
-
 // Create a struct_message called DHTReadings to hold sensor readings
-struct_message readings;
+msg_sent readings;
 
-typedef struct struct_msg {
-  char mode;  //d = default, a = auto, m = manual
-  unsigned long humidity_thresh;  //solo per a
-  String datetime;  //solo per d
-} msg_sent;
 
-msg_sent incomingReadings;
-
-void printData(msg_sent* msg){
-  Serial.println(msg->humidity_thresh);
-  Serial.println(msg->datetime);
-  Serial.println(msg->mode);
-}
-
-// Callback when data is sent
-void OnDataSent(uint8_t *mac_addr, uint8_t sendStatus) {
-  Serial.print("Last Packet Send Status: ");
-  if (sendStatus == 0){
-    Serial.println("Delivery success");
-  }
-  else{
-    Serial.println("Delivery fail");
-  }
-}
-
-// Callback when data is received
-void OnDataRecv(uint8_t * mac, uint8_t *incomingData, uint8_t len) {
-  memcpy(&incomingReadings, incomingData, sizeof(incomingReadings));
-  Serial.print("Bytes received: ");
-  Serial.println(len);
-  printData(&incomingReadings);
-}
 
 /*void getReadings(){
   // legge i valori da trasmettere poi all'altro esp
@@ -98,29 +52,7 @@ void OnDataRecv(uint8_t * mac, uint8_t *incomingData, uint8_t len) {
   readings.irr = irrigationMode;
 }*/
 
-const char* ssid = "Sky Wifi";  // SSID della rete Wi-Fi
-const char* password = "federicogiuliafedericogiulia";  // Password della rete Wi-Fi
 
-void collegaWifi() {
-  // Inizializza la comunicazione seriale
-  // Avvia la connessione Wi-Fi
-  Serial.print("Connessione a ");
-  Serial.println(ssid);
-
-
-  WiFi.begin(ssid, password);
-
-  // Attendi fino alla connessione
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-
-  Serial.println("");
-  Serial.println("WiFi connesso");
-  Serial.println("Indirizzo IP: ");
-  Serial.println(WiFi.localIP());
-}
 
 void creaDatiFasulli() {
   readings.water = 1;
@@ -132,14 +64,10 @@ void creaDatiFasulli() {
   readings.irr = 7;
 }
 
-void setup() {
-  // Init Serial Monitor
-  Serial.begin(9600);
-  espSerial.begin(9600);
-  // Set device as a Wi-Fi Station
-  WiFi.mode(WIFI_STA);
-  WiFi.disconnect();
 
+
+// LASCIARE NEL .ino altrimenti crasha
+void initEspNow(){
   // Init ESP-NOW
   if (esp_now_init() != 0) {
     Serial.println("Error initializing ESP-NOW");
@@ -154,10 +82,22 @@ void setup() {
   esp_now_register_send_cb(OnDataSent);
   
   // Register peer
-  esp_now_add_peer(broadcastAddress, ESP_NOW_ROLE_COMBO, 1, NULL, 0);
-
+  esp_now_add_peer(slaveMacAddress, ESP_NOW_ROLE_COMBO, 1, NULL, 0);
+  
   // Register for a callback function that will be called when data is received
   esp_now_register_recv_cb(OnDataRecv);
+  Serial.println("ESP NOW Init Successfully");
+
+}
+
+
+void setup() {
+  // Init Serial Monitor
+  Serial.begin(9600);
+  espSerial.begin(9600);
+  // Set device as a Wi-Fi Station
+  connectWifi();
+  initEspNow();  
 }
  
 void loop() {
@@ -165,11 +105,9 @@ void loop() {
   if (currentMillis - previousMillis >= interval) {
     // save the last time you updated the DHT values
     previousMillis = currentMillis;
-
     //Get DHT readings
     //getReadings();
     creaDatiFasulli();
-    
     // Send message via ESP-NOW
     esp_now_send(broadcastAddress, (uint8_t *) &readings, sizeof(readings));
   }
